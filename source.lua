@@ -1,27 +1,23 @@
-local TARGET_URL = "https://www.roblox.com/share?code=9c01b9f0d829174daf43ea48723b5343&type=Server"
+-- Define la URL de Roblox a la que quieres redirigir.
+local URL_DESTINO = "https://www.roblox.com/share?code=9c01b9f0d829174daf43ea48723b5343&type=Server"
 
------------------------------------------------------------------------------
-
-
--- Función principal para ejecutar la redirección
-local function perform_http_redirect()
+-- Función para abrir la URL de forma segura.
+-- En Roblox, usamos la función 'PromptOpenExternalLink'.
+local function abrirEnlace()
+    -- Obtenemos el servicio de juegos para acceder a funciones de la interfaz de usuario.
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
     
-    -- 2. Establece el código de estado HTTP 302 (Found - Redirección Temporal).
-    -- Esto indica al navegador que debe buscar una nueva ubicación.
-    ngx.status = 302 
-
-    -- 3. Establece el encabezado 'Location'.
-    -- El navegador lee este encabezado para saber a dónde ir.
-    ngx.header["Location"] = TARGET_URL
-    
-    -- Opcional: Proporciona un cuerpo de respuesta con un enlace de respaldo.
-    ngx.say('<html><body>')
-    ngx.say('<p>Redireccionando a: <a href="' .. TARGET_URL .. '">Click aquí</a></p>')
-    ngx.say('</body></html>')
-    
-    -- 4. Finaliza la solicitud HTTP.
-    return ngx.exit(ngx.HTTP_OK)
+    -- Verificamos si la función existe para evitar errores en versiones antiguas o en otros entornos.
+    if game.GuiService and game.GuiService.PromptOpenExternalLink then
+        -- Esta función solicita al usuario permiso para abrir un enlace externo
+        -- para garantizar la seguridad.
+        game.GuiService:PromptOpenExternalLink(URL_DESTINO)
+        print("Solicitando al jugador abrir el enlace: " .. URL_DESTINO)
+    else
+        -- Mensaje si el entorno no es Roblox o la función no está disponible.
+        warn("No se pudo usar PromptOpenExternalLink. La URL es: " .. URL_DESTINO)
+    end
 end
 
--- Llama a la función (esto dependerá de la configuración específica de tu servidor).
--- perform_http_redirect()
+-- Llamamos a la función para que se ejecute.
+abrirEnlace()
